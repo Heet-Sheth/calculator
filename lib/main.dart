@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:math_expressions/math_expressions.dart';
 import 'package:provider/provider.dart';
-
 import 'theme_notifier.dart';
 
 void main() {
@@ -61,7 +60,7 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
           _flag = false;
         } else if (_flag) {
           String lastC = _output[_output.length - 1];
-          if (lastC == '+' || lastC == '-' || lastC == '*' || lastC == '/' || lastC == '%') return;
+          if (lastC == '+' || lastC == '-' || lastC == '*' || lastC == '/' || lastC == '%' || lastC == '^' || lastC == '!') return;
           _answer = _calculateOutput(_output);
         }
       } else if (buttonText == '=') {
@@ -70,25 +69,68 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
       } else if (buttonText == '+' || buttonText == '-' || buttonText == '*' || buttonText == '/' || buttonText == '/') {
         _output += buttonText;
         _flag = true;
+      } else if(buttonText=='%'){
+        _answer=_calculateOutput("$_output/100");
+        _output+='%';
+      }
+      else if (buttonText == '√') {
+        _output += 'sqrt';
+        _flag = true;
+      } else if (buttonText == 'π') {
+        _output += 'π';
+        _flag = true;
+      } else if (buttonText == '^') {
+        _output += '^';
+        _flag = true;
+      } else if (buttonText == '!') {
+        _output += '!';
+        _flag = true;
+        _answer = _calculateOutput(_output);
+      } else if (buttonText == "()") {
+        // Add an opening parenthesis only if the last character is an operator or an open parenthesis
+        if (_output.isEmpty || _output.endsWith('+') || _output.endsWith('-') || _output.endsWith('*') || _output.endsWith('/') || _output.endsWith('(')) {
+          _output += '(';
+        }
+        else if (_output.isNotEmpty && _countOccurrences(_output, '(') > _countOccurrences(_output, ')')) {
+          // Add a closing parenthesis only if there are more open parentheses than closed ones
+          _output += ')';
+          _answer=_calculateOutput(_output);
+        }
+        else {
+          _output += '*(';
+        }
+        _flag = false;
       } else {
+        if(_output.isNotEmpty && _output.endsWith(')')){
+          if(buttonText=='0' ||buttonText=='1' ||buttonText=='2' ||buttonText=='3' ||buttonText=='4' ||buttonText=='5' ||buttonText=='6' ||buttonText=='7' ||buttonText=='8' ||buttonText=='9') _output+='*';
+        }
         _output += buttonText;
         if (_flag) _answer = _calculateOutput(_output);
       }
     });
   }
 
+  int _countOccurrences(String str, String sunString) {
+    return str.split(sunString).length - 1;
+  }
+
   bool isInteger(num value) => value is int || value == value.roundToDouble();
 
   String _calculateOutput(String input) {
     if (input.isEmpty) return '';
-    final Parser p = Parser();
-    final Expression exp = p.parse(input);
-    final ContextModel cm = ContextModel();
-    final double eval = exp.evaluate(EvaluationType.REAL, cm);
-    final num ans = num.parse(eval.toStringAsFixed(8));
-    String answer = ans.toString();
-    if (isInteger(eval)) answer = answer.substring(0, answer.length - 2);
-    return answer;
+
+    try {
+      final Parser p = Parser();
+      final Expression exp = p.parse(input);
+      final ContextModel cm = ContextModel();
+      final double eval = exp.evaluate(EvaluationType.REAL, cm);
+      final num ans = num.parse(eval.toStringAsFixed(8));
+      String answer=ans.toString();
+      if (isInteger(eval)) answer = answer.substring(0, answer.length - 2);
+      return answer;
+    } catch (e) {
+      return 'Error';
+    }
   }
 
   Future<void> _showThemeSelectionDialog(BuildContext context) async {
@@ -257,6 +299,68 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
               ),
             ),
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              GestureDetector(
+                onTap: () => _onPressed('√'),
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.2,
+                  padding: const EdgeInsets.all(8.0),
+                  child: const Text(
+                    '√',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24.0,
+                    ),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _onPressed('π'),
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.2,
+                  padding: const EdgeInsets.all(8.0),
+                  child: const Text(
+                    'π',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24.0,
+                    ),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _onPressed('^'),
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.2,
+                  padding: const EdgeInsets.all(8.0),
+                  child: const Text(
+                    '^',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24.0,
+                    ),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _onPressed('!'),
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.2,
+                  padding: const EdgeInsets.all(8.0),
+                  child: const Text(
+                    '!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24.0,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
