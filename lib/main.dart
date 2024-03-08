@@ -6,7 +6,7 @@ import 'theme_notifier.dart';
 void main() {
   runApp(
     ChangeNotifierProvider<ThemeNotifier>(
-      create: (_) => ThemeNotifier(ThemeData.light(),ThemeMode.system),
+      create: (_) => ThemeNotifier(ThemeData.light(), ThemeMode.system),
       child: const CalculatorApp(),
     ),
   );
@@ -45,7 +45,7 @@ class CalculatorHomePage extends StatefulWidget {
 
 class CalculatorHomePageState extends State<CalculatorHomePage> {
   String _output = '', _answer = '';
-  bool _flag = false;
+  bool _flag = false, _inverse = false, _areRowsVisible = false;
 
   void _onPressed(String buttonText) {
     setState(() {
@@ -54,26 +54,58 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
         _answer = '';
         _flag = false;
       } else if (buttonText == '⌫') {
-        _output = _output.isNotEmpty ? _output.substring(0, _output.length - 1) : '';
+        _output =
+            _output.isNotEmpty ? _output.substring(0, _output.length - 1) : '';
         if (_output.isEmpty) {
           _answer = '';
           _flag = false;
         } else if (_flag) {
           String lastC = _output[_output.length - 1];
-          if (lastC == '+' || lastC == '-' || lastC == '*' || lastC == '/' || lastC == '%' || lastC == '^' || lastC == '!') return;
+          if (lastC == '+' ||
+              lastC == '-' ||
+              lastC == '*' ||
+              lastC == '/' ||
+              lastC == '%' ||
+              lastC == '^' ||
+              lastC == '!') return;
           _answer = _calculateOutput(_output);
         }
+      } else if (buttonText == 'x²') {
+        _output += '^2';
+        _flag = true;
+        _answer = _calculateOutput(_output);
+      } else if (buttonText == 'e') {
+        _output += 'e';
+        _flag = true;
+        _answer = _calculateOutput(_output);
+      } else if (buttonText == 'ln') {
+        _output += 'ln';
+        _flag = true;
+        _answer = _calculateOutput(_output);
+      } else if (buttonText == '10ˣ') {
+        _output += '10^';
+        _flag = true;
+        _answer = _calculateOutput(_output);
+      } else if (buttonText == 'log') {
+        _output += 'log';
+        _flag = true;
+        _answer = _calculateOutput(_output);
+      } else if (buttonText == "INV") {
+        _inverse = !_inverse;
       } else if (buttonText == '=') {
         _output = _calculateOutput(_output);
         _answer = '';
-      } else if (buttonText == '+' || buttonText == '-' || buttonText == '*' || buttonText == '/' || buttonText == '/') {
+      } else if (buttonText == '+' ||
+          buttonText == '-' ||
+          buttonText == '*' ||
+          buttonText == '/' ||
+          buttonText == '/') {
         _output += buttonText;
         _flag = true;
-      } else if(buttonText=='%'){
-        _answer=_calculateOutput("$_output/100");
-        _output+='%';
-      }
-      else if (buttonText == '√') {
+      } else if (buttonText == '%') {
+        _answer = _calculateOutput("$_output/100");
+        _output += '%';
+      } else if (buttonText == '√') {
         _output += 'sqrt';
         _flag = true;
       } else if (buttonText == 'π') {
@@ -88,21 +120,34 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
         _answer = _calculateOutput(_output);
       } else if (buttonText == "()") {
         // Add an opening parenthesis only if the last character is an operator or an open parenthesis
-        if (_output.isEmpty || _output.endsWith('+') || _output.endsWith('-') || _output.endsWith('*') || _output.endsWith('/') || _output.endsWith('(')) {
+        if (_output.isEmpty ||
+            _output.endsWith('+') ||
+            _output.endsWith('-') ||
+            _output.endsWith('*') ||
+            _output.endsWith('/') ||
+            _output.endsWith('(')) {
           _output += '(';
-        }
-        else if (_output.isNotEmpty && _countOccurrences(_output, '(') > _countOccurrences(_output, ')')) {
+        } else if (_output.isNotEmpty &&
+            _countOccurrences(_output, '(') > _countOccurrences(_output, ')')) {
           // Add a closing parenthesis only if there are more open parentheses than closed ones
           _output += ')';
-          _answer=_calculateOutput(_output);
-        }
-        else {
+          _answer = _calculateOutput(_output);
+        } else {
           _output += '*(';
         }
         _flag = false;
       } else {
-        if(_output.isNotEmpty && _output.endsWith(')')){
-          if(buttonText=='0' ||buttonText=='1' ||buttonText=='2' ||buttonText=='3' ||buttonText=='4' ||buttonText=='5' ||buttonText=='6' ||buttonText=='7' ||buttonText=='8' ||buttonText=='9') _output+='*';
+        if (_output.isNotEmpty && _output.endsWith(')')) {
+          if (buttonText == '0' ||
+              buttonText == '1' ||
+              buttonText == '2' ||
+              buttonText == '3' ||
+              buttonText == '4' ||
+              buttonText == '5' ||
+              buttonText == '6' ||
+              buttonText == '7' ||
+              buttonText == '8' ||
+              buttonText == '9') _output += '*';
         }
         _output += buttonText;
         if (_flag) _answer = _calculateOutput(_output);
@@ -125,7 +170,7 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
       final ContextModel cm = ContextModel();
       final double eval = exp.evaluate(EvaluationType.REAL, cm);
       final num ans = num.parse(eval.toStringAsFixed(8));
-      String answer=ans.toString();
+      String answer = ans.toString();
       if (isInteger(eval)) answer = answer.substring(0, answer.length - 2);
       return answer;
     } catch (e) {
@@ -134,7 +179,8 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
   }
 
   Future<void> _showThemeSelectionDialog(BuildContext context) async {
-    ThemeMode? selectedThemeMode = Provider.of<ThemeNotifier>(context, listen: false).getThemeMode();
+    ThemeMode? selectedThemeMode =
+        Provider.of<ThemeNotifier>(context, listen: false).getThemeMode();
 
     showDialog<void>(
       context: context,
@@ -190,12 +236,11 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
                   onPressed: selectedThemeMode == null
                       ? null
                       : () {
-                    // Set the chosen theme mode
-                    Provider.of<ThemeNotifier>(context, listen: false)
-                        .setTheme(
-                        ThemeData.light(), selectedThemeMode!);
-                    Navigator.of(context).pop(); // Close the dialog
-                  },
+                          // Set the chosen theme mode
+                          Provider.of<ThemeNotifier>(context, listen: false)
+                              .setTheme(ThemeData.light(), selectedThemeMode!);
+                          Navigator.of(context).pop(); // Close the dialog
+                        },
                   child: const Text('Ok'),
                 ),
               ],
@@ -205,45 +250,6 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
       },
     );
   }
-
-  // Widget _buildThemeOption(BuildContext context, String themeName) {
-  //   return ListTile(
-  //     title: Text(themeName),
-  //     onTap: () {
-  //       Navigator.of(context).pop(); // Close the dialog
-  //       if (themeName == 'Light') {
-  //         // Set the theme to light
-  //         _setTheme(ThemeMode.light);
-  //       } else if (themeName == 'Dark') {
-  //         // Set the theme to dark
-  //         _setTheme(ThemeMode.dark);
-  //       } else if (themeName == 'System Theme') {
-  //         // Set the theme to system default
-  //         _setTheme(ThemeMode.system);
-  //       }
-  //     },
-  //   );
-  // }
-
-//   void _setTheme(ThemeMode themeMode) {
-//     setState(() {
-//       // Set the theme mode for the entire app
-//       WidgetsBinding.instance.addPostFrameCallback((_) {
-//         ThemeMode selectedThemeMode = ThemeMode.light; // Initialize with default value
-//
-// // Inside your dialog box or theme selection mechanism
-//         selectedThemeMode = ThemeMode.dark; // Update with the user's selection
-//
-// // Finally, when setting the theme in your _setTheme method
-//         Provider.of<ThemeNotifier>(context, listen: false).setTheme(
-//           ThemeData.light(), // Provide your desired ThemeData
-//           selectedThemeMode, // Provide the selected ThemeMode
-//         );
-//
-//
-//       });
-//     });
-//   }
 
   @override
   Widget build(BuildContext context) {
@@ -302,65 +308,48 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
-              GestureDetector(
-                onTap: () => _onPressed('√'),
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.2,
-                  padding: const EdgeInsets.all(8.0),
-                  child: const Text(
-                    '√',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24.0,
-                    ),
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _onPressed('π'),
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.2,
-                  padding: const EdgeInsets.all(8.0),
-                  child: const Text(
-                    'π',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24.0,
-                    ),
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _onPressed('^'),
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.2,
-                  padding: const EdgeInsets.all(8.0),
-                  child: const Text(
-                    '^',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24.0,
-                    ),
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _onPressed('!'),
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.2,
-                  padding: const EdgeInsets.all(8.0),
-                  child: const Text(
-                    '!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24.0,
-                    ),
-                  ),
-                ),
+              _buildOperatorButton(_inverse ? 'x²' : '√'),
+              _buildOperatorButton('π'),
+              _buildOperatorButton('^'),
+              _buildOperatorButton('!'),
+              ToggleButtons(
+                onPressed: (int index) {
+                  setState(() {
+                    _areRowsVisible = !_areRowsVisible;
+                  });
+                },
+                isSelected: [_areRowsVisible],
+                children: <Widget>[
+                  Icon(_areRowsVisible
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down),
+                ],
               ),
             ],
           ),
-
+          if (_areRowsVisible)
+            Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    _buildOperatorButton('DEG'),
+                    _buildOperatorButton(_inverse ? 'cosec' : 'sin'),
+                    _buildOperatorButton(_inverse ? 'sec' : 'cos'),
+                    _buildOperatorButton(_inverse ? 'cot' : 'tan'),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    _buildOperatorButton('INV'),
+                    _buildOperatorButton('e'),
+                    _buildOperatorButton(_inverse ? 'eˣ' : 'ln'),
+                    _buildOperatorButton(_inverse ? '10ˣ' : 'log'),
+                  ],
+                ),
+              ],
+            ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
@@ -421,11 +410,13 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
           backgroundColor: MaterialStateProperty.all<Color>(color),
           shape: MaterialStateProperty.all<RoundedRectangleBorder>(
             RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(50.0), // Ensure the button is perfectly round
+              borderRadius: BorderRadius.circular(
+                  50.0), // Ensure the button is perfectly round
             ),
           ),
           padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-            const EdgeInsets.symmetric(vertical: 8.0), // Adjust vertical padding here
+            const EdgeInsets.symmetric(
+                vertical: 8.0), // Adjust vertical padding here
           ),
         ),
         child: Text(
@@ -435,6 +426,21 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
             fontSize: 24.0,
             color: Colors.white,
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOperatorButton(String operator) {
+    return GestureDetector(
+      onTap: () => _onPressed(operator),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.2,
+        padding: const EdgeInsets.all(8.0),
+        child: Text(
+          operator,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 24.0),
         ),
       ),
     );
