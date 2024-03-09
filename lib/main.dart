@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:math_expressions/math_expressions.dart';
 import 'package:provider/provider.dart';
@@ -70,12 +72,30 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
               lastC == '!') return;
           _answer = _calculateOutput(_output);
         }
+      } else if (buttonText == "sin" ||
+          buttonText == "cos" ||
+          buttonText == "tan") {
+        _output += '$buttonText(';
+        _flag = true;
+        _answer = _calculateOutput(_output);
+      } else if (buttonText == "cosec") {
+        _output += '1/sin(';
+        _flag = true;
+        _answer = _calculateOutput(_output);
+      } else if (buttonText == "sec") {
+        _output += '1/cos(';
+        _flag = true;
+        _answer = _calculateOutput(_output);
+      } else if (buttonText == "cot") {
+        _output += '1/tan(';
+        _flag = true;
+        _answer = _calculateOutput(_output);
       } else if (buttonText == 'x²') {
         _output += '^2';
         _flag = true;
         _answer = _calculateOutput(_output);
       } else if (buttonText == 'e') {
-        _output += 'e';
+        _output += e.toStringAsFixed(8);
         _flag = true;
         _answer = _calculateOutput(_output);
       } else if (buttonText == 'ln') {
@@ -87,7 +107,7 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
         _flag = true;
         _answer = _calculateOutput(_output);
       } else if (buttonText == 'log') {
-        _output += 'log';
+        _output += 'log10(';
         _flag = true;
         _answer = _calculateOutput(_output);
       } else if (buttonText == "INV") {
@@ -109,10 +129,19 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
         _output += 'sqrt';
         _flag = true;
       } else if (buttonText == 'π') {
-        _output += 'π';
+        if (_output.isNotEmpty &&
+            (_output[_output.length - 1].contains(RegExp(r'[0-9]')) ||
+                _output[_output.length - 1] == ')')) {
+          _output += '*';
+        }
+        _output += pi.toStringAsFixed(8);
         _flag = true;
+        _answer = _calculateOutput(_output);
       } else if (buttonText == '^') {
         _output += '^';
+        _flag = true;
+      } else if (buttonText == "eˣ") {
+        _output += "${e.toStringAsFixed(8)}^";
         _flag = true;
       } else if (buttonText == '!') {
         _output += '!';
@@ -166,6 +195,14 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
 
     try {
       final Parser p = Parser();
+      final int openBrackets = input.split('(').length - 1;
+      final int closeBrackets = input.split(')').length - 1;
+      final int missingBrackets = openBrackets - closeBrackets;
+
+      if (missingBrackets > 0) {
+        input += ')' * missingBrackets; // Append missing closing brackets
+      }
+
       final Expression exp = p.parse(input);
       final ContextModel cm = ContextModel();
       final double eval = exp.evaluate(EvaluationType.REAL, cm);
@@ -283,11 +320,14 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
             child: Container(
               padding: const EdgeInsets.all(16.0),
               alignment: Alignment.bottomRight,
-              child: Text(
-                _output,
-                style: const TextStyle(
-                  fontSize: 48.0,
-                  fontWeight: FontWeight.bold,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Text(
+                  _output,
+                  style: const TextStyle(
+                    fontSize: 48.0,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -296,11 +336,14 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
             child: Container(
               padding: const EdgeInsets.all(16.0),
               alignment: Alignment.bottomRight,
-              child: Text(
-                _answer,
-                style: const TextStyle(
-                  fontSize: 48.0,
-                  fontWeight: FontWeight.bold,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Text(
+                  _answer,
+                  style: const TextStyle(
+                    fontSize: 48.0,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
