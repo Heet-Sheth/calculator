@@ -168,7 +168,6 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
         _flag = true;
         _answer = _calculateOutput(_output);
       } else if (buttonText == "()") {
-        print('$_output-$openBracketsCount-$closeBracketsCount');
         // Add an opening parenthesis only if the last character is an operator or an open parenthesis
         if (_output.isEmpty ||
             _output.endsWith('+') ||
