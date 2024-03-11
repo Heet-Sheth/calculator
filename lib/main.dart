@@ -47,7 +47,8 @@ class CalculatorHomePage extends StatefulWidget {
 
 class CalculatorHomePageState extends State<CalculatorHomePage> {
   String _output = '', _answer = '';
-  bool _flag = false, _inverse = false, _areRowsVisible = false;
+  bool _flag = false, _inverse = false, _areRowsVisible = false, _isRad = true;
+  int openBracketsCount = 0, closeBracketsCount = 0;
 
   void _onPressed(String buttonText) {
     setState(() {
@@ -55,9 +56,19 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
         _output = '';
         _answer = '';
         _flag = false;
+        openBracketsCount = 0; // Reset the count of opening brackets
+        closeBracketsCount = 0; // Reset the count of closing brackets
       } else if (buttonText == '⌫') {
-        _output =
-            _output.isNotEmpty ? _output.substring(0, _output.length - 1) : '';
+        if (_output.isNotEmpty) {
+          String lastChar = _output[_output.length - 1];
+          if (lastChar == '(') {
+            openBracketsCount--;
+          } else if (lastChar == ')') {
+            closeBracketsCount--;
+          }
+          _output = _output.substring(0, _output.length - 1);
+        }
+
         if (_output.isEmpty) {
           _answer = '';
           _flag = false;
@@ -72,22 +83,29 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
               lastC == '!') return;
           _answer = _calculateOutput(_output);
         }
+      } else if (buttonText == "Rad" || buttonText == "Deg") {
+        _isRad = !_isRad;
+        _answer = _calculateOutput(_output);
       } else if (buttonText == "sin" ||
           buttonText == "cos" ||
           buttonText == "tan") {
         _output += '$buttonText(';
+        openBracketsCount++;
         _flag = true;
         _answer = _calculateOutput(_output);
       } else if (buttonText == "cosec") {
         _output += '1/sin(';
+        openBracketsCount++;
         _flag = true;
         _answer = _calculateOutput(_output);
       } else if (buttonText == "sec") {
         _output += '1/cos(';
+        openBracketsCount++;
         _flag = true;
         _answer = _calculateOutput(_output);
       } else if (buttonText == "cot") {
         _output += '1/tan(';
+        openBracketsCount++;
         _flag = true;
         _answer = _calculateOutput(_output);
       } else if (buttonText == 'x²') {
@@ -108,6 +126,7 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
         _answer = _calculateOutput(_output);
       } else if (buttonText == 'log') {
         _output += 'log10(';
+        openBracketsCount++;
         _flag = true;
         _answer = _calculateOutput(_output);
       } else if (buttonText == "INV") {
@@ -126,7 +145,8 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
         _answer = _calculateOutput("$_output/100");
         _output += '%';
       } else if (buttonText == '√') {
-        _output += 'sqrt';
+        _output += 'sqrt(';
+        openBracketsCount++;
         _flag = true;
       } else if (buttonText == 'π') {
         if (_output.isNotEmpty &&
@@ -148,6 +168,7 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
         _flag = true;
         _answer = _calculateOutput(_output);
       } else if (buttonText == "()") {
+        print('$_output-$openBracketsCount-$closeBracketsCount');
         // Add an opening parenthesis only if the last character is an operator or an open parenthesis
         if (_output.isEmpty ||
             _output.endsWith('+') ||
@@ -156,13 +177,26 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
             _output.endsWith('/') ||
             _output.endsWith('(')) {
           _output += '(';
+          openBracketsCount++;
         } else if (_output.isNotEmpty &&
-            _countOccurrences(_output, '(') > _countOccurrences(_output, ')')) {
-          // Add a closing parenthesis only if there are more open parentheses than closed ones
+            openBracketsCount > closeBracketsCount &&
+            (_output[_output.length - 1] == '0' ||
+                _output[_output.length - 1] == '1' ||
+                _output[_output.length - 1] == '2' ||
+                _output[_output.length - 1] == '3' ||
+                _output[_output.length - 1] == '4' ||
+                _output[_output.length - 1] == '5' ||
+                _output[_output.length - 1] == '6' ||
+                _output[_output.length - 1] == '7' ||
+                _output[_output.length - 1] == '8' ||
+                _output[_output.length - 1] == '9')) {
+          // Add a closing parenthesis only if there are more open parentheses than closed ones and the last character is a digit
           _output += ')';
+          closeBracketsCount++;
           _answer = _calculateOutput(_output);
         } else {
           _output += '*(';
+          openBracketsCount++;
         }
         _flag = false;
       } else {
@@ -184,20 +218,20 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
     });
   }
 
-  int _countOccurrences(String str, String sunString) {
-    return str.split(sunString).length - 1;
-  }
-
   bool isInteger(num value) => value is int || value == value.roundToDouble();
 
   String _calculateOutput(String input) {
     if (input.isEmpty) return '';
 
+    if (_isRad) {
+      input = input.replaceAll('sin(', 'sin($pi/180*');
+      input = input.replaceAll('cos(', 'cos($pi/180*');
+      input = input.replaceAll('tan(', 'tan($pi/180*');
+    }
+
     try {
       final Parser p = Parser();
-      final int openBrackets = input.split('(').length - 1;
-      final int closeBrackets = input.split(')').length - 1;
-      final int missingBrackets = openBrackets - closeBrackets;
+      final int missingBrackets = openBracketsCount - closeBracketsCount;
 
       if (missingBrackets > 0) {
         input += ')' * missingBrackets; // Append missing closing brackets
@@ -376,7 +410,7 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
-                    _buildOperatorButton('DEG'),
+                    _buildOperatorButton(_isRad ? 'Rad' : 'Deg'),
                     _buildOperatorButton(_inverse ? 'cosec' : 'sin'),
                     _buildOperatorButton(_inverse ? 'sec' : 'cos'),
                     _buildOperatorButton(_inverse ? 'cot' : 'tan'),
