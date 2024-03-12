@@ -1,9 +1,10 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:math_expressions/math_expressions.dart';
 import 'package:provider/provider.dart';
 import 'theme_notifier.dart';
+import 'package:intl/intl.dart';
+import 'package:collection/collection.dart';
 
 void main() {
   runApp(
@@ -45,10 +46,24 @@ class CalculatorHomePage extends StatefulWidget {
   CalculatorHomePageState createState() => CalculatorHomePageState();
 }
 
+class HistoryItem {
+  final String expression;
+  final String answer;
+  final DateTime date;
+
+  HistoryItem(this.expression, this.answer, this.date);
+}
+
 class CalculatorHomePageState extends State<CalculatorHomePage> {
   String _output = '', _answer = '';
-  bool _flag = false, _inverse = false, _areRowsVisible = false, _isRad = true;
+  bool _flag = false,
+      _inverse = false,
+      _areRowsVisible = false,
+      _isRad = true,
+      _isHistoryVisible = false;
   int openBracketsCount = 0, closeBracketsCount = 0;
+
+  List<HistoryItem> history = [];
 
   void _onPressed(String buttonText) {
     setState(() {
@@ -132,8 +147,12 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
       } else if (buttonText == "INV") {
         _inverse = !_inverse;
       } else if (buttonText == '=') {
-        _output = _calculateOutput(_output);
+        String tempAns = _calculateOutput(_output);
+        history.add(HistoryItem(_output, tempAns, DateTime.now()));
+        _output = tempAns;
         _answer = '';
+        openBracketsCount = 0; // Reset the count of opening brackets
+        closeBracketsCount = 0; // Reset the count of closing brackets
       } else if (buttonText == '+' ||
           buttonText == '-' ||
           buttonText == '*' ||
@@ -325,43 +344,73 @@ class CalculatorHomePageState extends State<CalculatorHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        actions: [
+        title: const Text('History'),
+        actions: <Widget>[
           PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'History') {
-                // Handle history action
-              } else if (value == 'Choose Theme') {
-                _showThemeSelectionDialog(context);
+            onSelected: (String result) {
+              if (result == 'Clear History') {
+                setState(() {
+                  history.clear();
+                });
               }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
               const PopupMenuItem<String>(
-                value: 'History',
-                child: Text('History'),
-              ),
-              const PopupMenuItem<String>(
-                value: 'Choose Theme',
-                child: Text('Choose Theme'),
+                value: 'Clear History',
+                child: Text('Clear History'),
               ),
             ],
           ),
         ],
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(16.0),
               alignment: Alignment.bottomRight,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Text(
-                  _output,
-                  style: const TextStyle(
-                    fontSize: 48.0,
-                    fontWeight: FontWeight.bold,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Text(
+                        _output,
+                        textAlign: TextAlign.right,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 48.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  PopupMenuButton<String>(
+                    onSelected: (String result) {
+                      if (result == 'History') {
+                        setState(() {
+                          _isHistoryVisible = !_isHistoryVisible;
+                        });
+                      } else if (result == 'changeTheme') {
+                        _showThemeSelectionDialog(context);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) =>
+                        <PopupMenuEntry<String>>[
+                      const PopupMenuItem<String>(
+                        value: 'History',
+                        child: Text('History'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'changeTheme',
+                        child: Text('Change Theme'),
+                      ),
+                      // Add more PopupMenuItems here
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
